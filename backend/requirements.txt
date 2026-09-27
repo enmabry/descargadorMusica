@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+yt-dlp
+ffmpeg-python
+spotipy
+mutagen
