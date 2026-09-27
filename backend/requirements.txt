@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-yt-dlp
+yt-dlp>=2024.03.10
 ffmpeg-python
-spotipy
+spotdl>=4.2.0
 mutagen

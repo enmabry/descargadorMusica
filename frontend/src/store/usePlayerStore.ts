@@ -12,6 +12,7 @@ interface PlayerState {
   currentTrackIndex: number | null;
   isPlaying: boolean;
   volume: number;
+  analyserNode: AnalyserNode | null;
   
   // Acciones
   loadFiles: (files: File[]) => void;
@@ -22,6 +23,7 @@ interface PlayerState {
   setVolume: (volume: number) => void;
   clearQueue: () => void;
   setIsPlaying: (playing: boolean) => void;
+  setAnalyserNode: (node: AnalyserNode) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -29,25 +31,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrackIndex: null,
   isPlaying: false,
   volume: 1.0,
+  analyserNode: null,
+
+  setAnalyserNode: (node: AnalyserNode) => set({ analyserNode: node }),
 
   loadFiles: (files: File[]) => {
-    // Filtramos para asegurar que solo procesamos audios
-    const audioFiles = files.filter(f => f.type.startsWith('audio/') || f.name.endsWith('.mp3'));
-    
-    const newTracks: LocalTrack[] = audioFiles.map(file => ({
+    if (files.length === 0) return;
+
+    const newTracks: LocalTrack[] = files.map(file => ({
       id: crypto.randomUUID(),
-      name: file.name.replace(/\.[^/.]+$/, ""), // Quitamos la extensión (.mp3) para el display
+      name: file.name.replace(/\.[^/.]+$/, ""), // Quitamos extensión
       file,
-      objectUrl: URL.createObjectURL(file) // La magia ocurre aquí: puntero local en RAM
+      objectUrl: URL.createObjectURL(file) 
     }));
 
     set((state) => {
       const isFirstLoad = state.tracks.length === 0 && newTracks.length > 0;
       return {
         tracks: [...state.tracks, ...newTracks],
-        // Si no había nada reproduciéndose, seleccionamos la primera canción que entró
         currentTrackIndex: isFirstLoad ? 0 : state.currentTrackIndex,
-        // (Opcional) Si quieres autostart, pondrías isPlaying: true aquí si isFirstLoad es true
+        isPlaying: isFirstLoad ? true : state.isPlaying
       };
     });
   },
@@ -61,9 +64,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   togglePlayPause: () => {
     const { currentTrackIndex, tracks, isPlaying } = get();
-    // Solo podemos pausar/reproducir si hay una canción seleccionada
     if (currentTrackIndex !== null && tracks.length > 0) {
       set({ isPlaying: !isPlaying });
+    } else if (currentTrackIndex === null && tracks.length > 0) {
+      set({ currentTrackIndex: 0, isPlaying: true });
     }
   },
 

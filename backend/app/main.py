@@ -4,7 +4,8 @@ from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 import os
 import asyncio
-from .downloader import download_audio_sync
+from pydantic import BaseModel
+from .downloader import download_audio_sync, extract_info_sync
 from .websockets_manager import manager
 
 app = FastAPI(title="Descargador Y2K API (Stateless)")
@@ -16,6 +17,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class ExtractRequest(BaseModel):
+    url: str
+
+class DownloadRequest(BaseModel):
+    url: str
+    session_id: str
 
 def remove_file(path: str):
     try:
@@ -29,13 +37,20 @@ def remove_file(path: str):
 def read_root():
     return {"status": "ok", "message": "Motor Y2K Stateless en línea"}
 
+@app.post("/api/extract")
+async def extract_url(req: ExtractRequest):
+    try:
+        tracks = await asyncio.to_thread(extract_info_sync, req.url)
+        return {"status": "ok", "tracks": tracks}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/download")
-async def process_url(url: str, session_id: str):
+async def process_url(req: DownloadRequest):
     loop = asyncio.get_running_loop()
     
     try:
-        # Ejecutar la descarga en un hilo para no bloquear el Event Loop
-        final_mp3_path = await asyncio.to_thread(download_audio_sync, url, session_id, loop)
+        final_mp3_path = await asyncio.to_thread(download_audio_sync, req.url, req.session_id, loop)
         filename = os.path.basename(final_mp3_path)
         
         # Devolvemos el archivo binario y programamos su autodestrucción
@@ -46,7 +61,7 @@ async def process_url(url: str, session_id: str):
             background=BackgroundTask(remove_file, final_mp3_path)
         )
     except Exception as e:
-        await manager.send_personal_message({"status": "failed", "error": str(e)}, session_id)
+        await manager.send_personal_message({"status": "failed", "error": str(e)}, req.session_id)
         return {"error": str(e)}
 
 @app.websocket("/ws/{session_id}")

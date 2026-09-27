@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: descargador_y2k_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
