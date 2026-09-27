@@ -62,8 +62,11 @@ export default function Home() {
     setIsRecording(true);
     setDownloadProgress(0);
     
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+    
     const sessionId = crypto.randomUUID();
-    const ws = new WebSocket(`ws://localhost:8000/ws/${sessionId}`);
+    const ws = new WebSocket(`${WS_URL}/ws/${sessionId}`);
     
     ws.onmessage = (event) => {
        try {
@@ -80,7 +83,7 @@ export default function Home() {
     };
 
     try {
-        const extractRes = await fetch('http://localhost:8000/api/extract', {
+        const extractRes = await fetch(`${API_URL}/api/extract`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
@@ -96,7 +99,7 @@ export default function Home() {
                 setQueueStatus({ current: i + 1, total, title: track.title });
                 setDownloadProgress(0);
                 
-                const dlRes = await fetch('http://localhost:8000/api/download', {
+                const dlRes = await fetch(`${API_URL}/api/download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: track.url, session_id: sessionId })
@@ -191,7 +194,11 @@ export default function Home() {
                  </p>
                </div>
             ) : isRecording && !queueStatus ? (
-               <p className="text-lg text-green-400 uppercase tracking-widest animate-pulse">ANALYZING...</p>
+               <div className="overflow-hidden whitespace-nowrap w-3/4">
+                 <p className="text-[13px] text-green-400/80 uppercase tracking-widest inline-block animate-[marquee_4s_linear_infinite] mt-1">
+                   [ WARMING UP TUBES ] --- [ CALIBRATING TAPE HEADS ] --- [ ENGAGING MOTORS ] --- 
+                 </p>
+               </div>
             ) : queueStatus ? (
                <div>
                  <div className="overflow-hidden whitespace-nowrap w-3/4 mb-0.5">
