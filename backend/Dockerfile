@@ -18,5 +18,5 @@ COPY . .
 # Exponer el puerto 8000
 EXPOSE 8000
 
-# Comando por defecto para correr FastAPI
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando por defecto para correr FastAPI (Compatible con Render)
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
