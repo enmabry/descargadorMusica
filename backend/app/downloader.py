@@ -39,7 +39,8 @@ def extract_info_sync(url: str) -> list:
     ydl_opts = {
         'extract_flat': True,
         'quiet': True,
-        'no_warnings': True
+        'no_warnings': True,
+        'extractor_args': {'youtube': ['player_client=android']}
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -95,7 +96,8 @@ def download_audio_sync(url: str, session_id: str, loop: asyncio.AbstractEventLo
         }],
         'progress_hooks': [my_hook],
         'quiet': False,
-        'no_warnings': True
+        'no_warnings': True,
+        'extractor_args': {'youtube': ['player_client=android']}
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

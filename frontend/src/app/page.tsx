@@ -105,7 +105,8 @@ export default function Home() {
                     body: JSON.stringify({ url: track.url, session_id: sessionId })
                 });
                 
-                if (dlRes.ok) {
+                const contentType = dlRes.headers.get('content-type');
+                if (dlRes.ok && contentType && !contentType.includes('application/json')) {
                     const blob = await dlRes.blob();
                     const fileUrl = URL.createObjectURL(blob);
                     
